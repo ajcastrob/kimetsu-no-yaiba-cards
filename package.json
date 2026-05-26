@@ -1,0 +1,23 @@
+{
+  "name": "test_font",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "servor ./ index.html 1234 --reload"
+  },
+  "devDependencies": {
+    "servor": "^4.0.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.2.2",
+      "onFail": "download"
+    }
+  }
+}
