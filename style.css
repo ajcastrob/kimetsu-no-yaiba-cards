@@ -56,6 +56,9 @@
   --breathing-glow: rgba(79, 195, 247, 0.3);
   --ambient-x: 25%;
   --ambient-y: 30%;
+  --sensor-color: 79, 195, 247;
+  --sensor-glow: rgba(79, 195, 247, 0.32);
+  --ambient-strength: 0.28;
 
   --ichimatsu-color: rgba(255, 255, 255, 0.02);
 }
@@ -141,6 +144,30 @@ body {
   position: relative;
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -9;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle 520px at var(--ambient-x) var(--ambient-y),
+      rgba(var(--sensor-color), calc(var(--ambient-strength) * 0.18)) 0%,
+      transparent 68%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02),
+      transparent 22%,
+      transparent 78%,
+      rgba(0, 0, 0, 0.16)
+    );
+  mix-blend-mode: screen;
+  opacity: 0.9;
+  animation: sensory-drift 16s ease-in-out infinite alternate;
+}
+
 /* --------------------------------------------------------------------------
    FONDO NOCTURNO — TAISHO ERA ATMOSPHERE
    -------------------------------------------------------------------------- */
@@ -166,6 +193,28 @@ body {
     ),
     linear-gradient(180deg, #08080e 0%, #0d1020 40%, #0a0e1a 100%);
   transition: background var(--transition-slow);
+}
+
+.bg-night::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -7;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle 240px at calc(var(--ambient-x) + 6%) calc(var(--ambient-y) + 8%),
+      rgba(var(--sensor-color), 0.08),
+      transparent 72%
+    ),
+    linear-gradient(
+      120deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.02) 48%,
+      transparent 100%
+    );
+  opacity: 0.9;
+  animation: moon-haze 18s ease-in-out infinite;
 }
 
 :root:has(#radio-zenitsu:checked) .bg-night {
@@ -277,6 +326,7 @@ body {
   );
   pointer-events: none;
   opacity: 0.3;
+  mix-blend-mode: soft-light;
 }
 
 /* --------------------------------------------------------------------------
@@ -309,6 +359,52 @@ body {
   transition:
     border-color var(--transition-med),
     box-shadow var(--transition-med);
+}
+
+.app-container::before,
+.app-container::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.app-container::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--sensor-color), 0.08) 46%,
+    rgba(255, 255, 255, 0.02) 52%,
+    transparent 100%
+  );
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+
+.app-container::after {
+  opacity: 0;
+  background: radial-gradient(
+    circle 220px at var(--ambient-x) var(--ambient-y),
+    rgba(255, 255, 255, 0.22),
+    rgba(var(--sensor-color), 0.1) 35%,
+    transparent 72%
+  );
+  transform: scale(0.92);
+  transition:
+    opacity 0.18s ease,
+    transform 0.32s ease;
+}
+
+.app-container.is-style-switching::after {
+  opacity: 1;
+  transform: scale(1.05);
+  animation: focus-breath 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-container.is-blade-flash::after {
+  opacity: 1;
+  transform: scale(1.08);
+  animation: blade-flash 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* --------------------------------------------------------------------------
@@ -389,6 +485,7 @@ body {
 .title-sub {
   font-family: var(--font-ui);
   font-size: 0.5rem;
+  margin-top: 10px;
   letter-spacing: 4px;
   color: var(--text-muted);
   font-weight: 300;
@@ -567,6 +664,7 @@ body {
    -------------------------------------------------------------------------- */
 .cards-container {
   display: flex;
+  margin-top: 10px;
   gap: 18px;
   flex: 1;
   align-items: stretch;
@@ -612,6 +710,24 @@ body {
   box-shadow:
     -8px 8px 20px rgba(0, 0, 0, 0.5),
     inset 0 0 30px rgba(0, 0, 0, 0.3);
+}
+
+.card-inner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    140deg,
+    rgba(255, 255, 255, 0.04),
+    transparent 24%,
+    transparent 70%,
+    rgba(var(--sensor-color), 0.07)
+  );
+  opacity: 0.4;
+  transition:
+    opacity var(--transition-med),
+    transform var(--transition-med);
 }
 
 /* ---- CORNER FRAME ---- */
@@ -758,6 +874,7 @@ body {
   opacity: 0;
   transition: opacity var(--transition-slow);
   mix-blend-mode: screen;
+  filter: saturate(1.15);
 }
 .breathing-effect .particle-layer {
   position: absolute;
@@ -769,35 +886,45 @@ body {
   background:
     radial-gradient(
       ellipse 60% 40% at 20% 80%,
-      rgba(79, 195, 247, 0.15),
+      rgba(79, 195, 247, 0.12),
       transparent 70%
-    ),
-    radial-gradient(
-      ellipse 40% 60% at 80% 20%,
-      rgba(0, 188, 212, 0.1),
-      transparent 60%
     );
 }
 .water-effect .particle-layer {
-  animation: water-flow 4s ease-in-out infinite;
+  animation: water-flow 5s ease-in-out infinite;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    rgba(79, 195, 247, 0.06) 35%,
+    transparent 55%,
+    rgba(79, 195, 247, 0.04) 75%,
+    transparent 100%
+  );
 }
 
 /* THUNDER BREATHING — destellos amarillos */
 .thunder-effect {
   background:
     radial-gradient(
-      circle 80px at 30% 40%,
-      rgba(255, 255, 51, 0.12),
+      circle 100px at 30% 40%,
+      rgba(255, 255, 51, 0.06),
       transparent 70%
     ),
     radial-gradient(
-      circle 60px at 70% 60%,
-      rgba(79, 195, 247, 0.08),
+      circle 80px at 70% 60%,
+      rgba(79, 195, 247, 0.05),
       transparent 60%
     );
 }
 .thunder-effect .particle-layer {
-  animation: thunder-flash 0.6s ease-in-out infinite;
+  animation: thunder-flash 2.5s ease-in-out infinite;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 44%,
+    rgba(255, 255, 51, 0.10) 48%,
+    transparent 55%
+  );
 }
 
 /* BEAST BREATHING — slashes azulados */
@@ -816,6 +943,12 @@ body {
 }
 .beast-effect .particle-layer {
   animation: beast-slash 1.5s ease-in-out infinite;
+  background: repeating-linear-gradient(
+    125deg,
+    transparent 0 10px,
+    rgba(120, 191, 171, 0.08) 10px 12px,
+    transparent 12px 22px
+  );
 }
 
 @keyframes water-flow {
@@ -831,16 +964,20 @@ body {
 @keyframes thunder-flash {
   0%,
   100% {
-    opacity: 0.1;
+    opacity: 0.15;
     transform: scaleX(1);
   }
-  30% {
-    opacity: 0.9;
-    transform: scaleX(1.05) scaleY(1.02);
+  25% {
+    opacity: 0.55;
+    transform: scaleX(1.03) scaleY(1.01);
   }
-  60% {
-    opacity: 0.3;
-    transform: scaleX(0.98);
+  50% {
+    opacity: 0.2;
+    transform: scaleX(0.99);
+  }
+  75% {
+    opacity: 0.4;
+    transform: scaleX(1.02);
   }
 }
 
@@ -864,8 +1001,12 @@ body {
   border-color: rgba(255, 255, 255, 0.15);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
 }
+.character-card:hover .card-inner::after {
+  opacity: 0.78;
+  transform: translateX(2%) scale(1.02);
+}
 .character-card:hover .slayer-img {
-  filter: grayscale(30%) contrast(1.15) brightness(0.8);
+  filter: grayscale(20%) contrast(1.18) brightness(0.84) saturate(1.08);
   transform: scale(1.03);
 }
 .character-card:hover .breathing-kanji {
@@ -888,8 +1029,11 @@ body {
     0 0 30px var(--accent-sub),
     inset 0 0 30px var(--accent-sub);
 }
+.character-card:has(input:checked) .card-inner::after {
+  opacity: 0.92;
+}
 .character-card:has(input:checked) .slayer-img {
-  filter: grayscale(0%) contrast(1.2) brightness(0.9);
+  filter: grayscale(0%) contrast(1.22) brightness(0.92) saturate(1.12);
   transform: scale(1.02);
 }
 .character-card:has(input:checked) .slayer-name {
@@ -920,7 +1064,7 @@ body {
   background: rgba(10, 13, 22, 0.9);
   border: 1px solid var(--border-panel);
   padding: 22px;
-  padding-bottom: 156px;
+  padding-bottom: 228px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -929,6 +1073,29 @@ body {
     border-color var(--transition-med),
     box-shadow var(--transition-med);
   overflow-y: auto;
+}
+
+.details-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      circle 180px at var(--ambient-x) 18%,
+      rgba(var(--sensor-color), 0.09),
+      transparent 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.02),
+      transparent 28%,
+      transparent 72%,
+      rgba(0, 0, 0, 0.08)
+    );
+  opacity: 0.8;
+  mix-blend-mode: screen;
+  animation: panel-breath 12s ease-in-out infinite;
 }
 
 .details-panel .corner-frame .corner {
@@ -983,6 +1150,7 @@ body {
   line-height: 1.7;
   color: #c8c4d4;
   font-weight: 300;
+  text-wrap: pretty;
 }
 
 .label-tech {
@@ -1047,7 +1215,11 @@ body {
   border: 1px solid var(--border-subtle);
   border-left: 3px solid var(--accent-color);
   padding: 12px 14px;
-  transition: border-left-color var(--transition-fast);
+  transition:
+    border-left-color var(--transition-fast),
+    background var(--transition-med),
+    box-shadow var(--transition-med);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 .ability-title {
   font-family: var(--font-ui);
@@ -1083,7 +1255,13 @@ body {
   position: relative;
   overflow: hidden;
   text-align: center;
-  transition: border-color var(--transition-fast);
+  transform: translateZ(0);
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 .action-btn::before {
   content: "";
@@ -1108,6 +1286,11 @@ body {
   color: var(--bg-deep);
   box-shadow: 0 0 20px var(--accent-glow);
   font-weight: 700;
+  transform: translateY(-1px);
+}
+
+.action-btn:active {
+  transform: translateY(1px) scale(0.995);
 }
 
 .action-btn span {
@@ -1132,7 +1315,42 @@ body {
   backdrop-filter: blur(6px);
   z-index: 20;
   max-width: 260px;
-  transition: border-color var(--transition-fast);
+  overflow: hidden;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.music-player::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(var(--sensor-color), 0.08) 42%,
+    transparent 100%
+  );
+  opacity: 0.45;
+}
+
+.music-player.is-playing {
+  box-shadow:
+    0 0 0 1px rgba(var(--sensor-color), 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.28);
+}
+
+.music-player.is-buffering .music-dot {
+  animation-duration: 0.6s;
+}
+
+.music-player.is-playing .music-dot {
+  animation-duration: 1s;
+  box-shadow:
+    0 0 8px var(--accent-glow),
+    0 0 18px rgba(var(--sensor-color), 0.38);
 }
 
 .music-info {
@@ -1159,6 +1377,7 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 0 10px rgba(var(--sensor-color), 0.12);
 }
 
 .music-controls {
@@ -1230,6 +1449,72 @@ body {
   }
 }
 
+@keyframes sensory-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(0, -1.5%, 0) scale(1.03);
+  }
+}
+
+@keyframes moon-haze {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translate3d(1.5%, -1.5%, 0) scale(1.04);
+  }
+}
+
+@keyframes panel-breath {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-1%);
+  }
+}
+
+@keyframes focus-breath {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes blade-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+    filter: blur(8px);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1.04);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+    filter: blur(6px);
+  }
+}
+
 /* --------------------------------------------------------------------------
    PARTICLES BACKGROUND (JS generated, CSS sized)
    -------------------------------------------------------------------------- */
@@ -1252,4 +1537,49 @@ body {
 .details-panel::-webkit-scrollbar-thumb {
   background: var(--accent-color);
   border-radius: 2px;
+}
+
+@media (max-width: 1100px) {
+  .details-panel {
+    padding-bottom: 22px;
+  }
+
+  .music-player {
+    position: sticky;
+    bottom: 0;
+    right: auto;
+    width: 100%;
+    max-width: none;
+    border-left: none;
+    border-top: 1px solid var(--accent-color);
+    justify-content: center;
+    padding: 8px 16px;
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .music-player {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .music-label {
+    display: none;
+  }
+
+  .music-title {
+    font-size: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
