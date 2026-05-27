@@ -14,8 +14,8 @@ const SLAYERS = {
     abilityTitle: "水の呼吸 // RESPIRACIÓN DEL AGUA",
     abilityDesc:
       "Uno de los estilos de respiración más fundamentales. Traza elegantes remolinos de agua con su espada, combinando fluidez y precisión para abrumar a sus enemigos. Domina las once formas completas de este estilo.",
-    videoId: "bq7caidfUts",
-    videoTitle: "Kamado Tanjiro no Uta",
+    audioFile: "audio/tanjiro.mp3",
+    audioTitle: "Kamado Tanjiro no Uta",
   },
   zenitsu: {
     code: "我妻 善逸 // OP_02 // 雷",
@@ -24,8 +24,8 @@ const SLAYERS = {
     abilityTitle: "雷の呼吸 // RESPIRACIÓN DEL RAYO",
     abilityDesc:
       "Un estilo de respiración que imita la velocidad y el poder destructivo de un rayo. La Primera Forma «Relámpago Veloz» es un corte de velocidad divina que divide al enemigo en un instante. Solo seis formas se han transmitido a través de las generaciones.",
-    videoId: "1PO2AVXWBhk",
-    videoTitle: "Zenitsu Theme (Epic Version)",
+    audioFile: "audio/zenitsu.mp3",
+    audioTitle: "Zenitsu Theme (Epic Version)",
   },
   inosuke: {
     code: "嘴平 伊之助 // OP_03 // 獣",
@@ -34,8 +34,8 @@ const SLAYERS = {
     abilityTitle: "獣の呼吸 // RESPIRACIÓN DE LA BESTIA",
     abilityDesc:
       "Un estilo de respiración único creado por el propio Inosuke sin entrenamiento formal. Combina movimientos salvajes e impredecibles con el uso de dos espadas. El Primer Colmillo «Perforar» es una estocada giratoria que atraviesa al enemigo como un jabalí enfurecido.",
-    videoId: "ngMk0oAiyZI",
-    videoTitle: "Inosuke Theme V3 (Epic Version)",
+    audioFile: "audio/inosuke.mp3",
+    audioTitle: "Inosuke Theme V3 (Epic Version)",
   },
 };
 
@@ -387,11 +387,9 @@ setInterval(randomizeCoord, 4000);
 randomizeCoord();
 
 /* --------------------------------------------------------------------------
-   7. YOUTUBE IFrame API — MUSIC PLAYER PER CHARACTER
+   7. AUDIO API — MUSIC PLAYER PER CHARACTER
    -------------------------------------------------------------------------- */
-let ytPlayer = null;
-let ytReady = false;
-let pendingVideoId = null;
+let audioElement = document.getElementById("music-audio");
 
 function setMusicPlayerState(state) {
   if (!musicPlayer) return;
@@ -399,63 +397,25 @@ function setMusicPlayerState(state) {
   musicPlayer.classList.toggle("is-buffering", state === "buffering");
 }
 
-function onYouTubeIframeAPIReady() {
-  ytPlayer = new YT.Player("youtube-player", {
-    height: "0",
-    width: "0",
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      disablekb: 1,
-      fs: 0,
-      modestbranding: 1,
-      playsinline: 1,
-    },
-    events: {
-      onReady: () => {
-        ytReady = true;
-        setMusicPlayerState("buffering");
-        if (pendingVideoId) {
-          changeVideo(pendingVideoId);
-          pendingVideoId = null;
-        }
-      },
-      onStateChange: (event) => {
-        if (event.data === YT.PlayerState.PLAYING) {
-          setMusicPlayerState("playing");
-        } else if (event.data === YT.PlayerState.BUFFERING) {
-          setMusicPlayerState("buffering");
-        } else {
-          setMusicPlayerState("idle");
-        }
-        if (
-          event.data === YT.PlayerState.ENDED &&
-          ytPlayer &&
-          typeof ytPlayer.playVideo === "function"
-        ) {
-          ytPlayer.playVideo();
-        }
-      },
-    },
+function changeAudio(src, title) {
+  if (!audioElement) return;
+  musicTitle.textContent = title || "";
+  audioElement.src = src;
+  setMusicPlayerState("buffering");
+  audioElement.play().then(() => {
+    setMusicPlayerState("playing");
+  }).catch(() => {
+    setMusicPlayerState("idle");
   });
 }
 
-function changeVideo(videoId) {
-  if (!ytPlayer || !ytReady) {
-    pendingVideoId = videoId;
-    return;
-  }
-  try {
-    ytPlayer.loadVideoById({
-      videoId,
-      startSeconds: 0,
-      suggestedQuality: "small",
-    });
-    ytPlayer.playVideo();
-  } catch (e) {}
-}
-
-window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+audioElement.addEventListener("play", () => setMusicPlayerState("playing"));
+audioElement.addEventListener("waiting", () => setMusicPlayerState("buffering"));
+audioElement.addEventListener("pause", () => setMusicPlayerState("idle"));
+audioElement.addEventListener("ended", () => {
+  audioElement.currentTime = 0;
+  audioElement.play();
+});
 
 /* --------------------------------------------------------------------------
    7. WEB AUDIO API — SOUND DESIGN
@@ -898,10 +858,9 @@ function selectSlayer(id) {
   setBreathingStyle(styleMap[id] || "water");
   pulseInterface("style-switch");
 
-  // Cambiar música de YouTube
-  if (data.videoId) {
-    musicTitle.textContent = data.videoTitle || "";
-    changeVideo(data.videoId);
+  // Cambiar música
+  if (data.audioFile) {
+    changeAudio(data.audioFile, data.audioTitle);
   }
 
   // Audio
