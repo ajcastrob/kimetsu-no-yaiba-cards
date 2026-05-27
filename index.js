@@ -108,33 +108,75 @@ const STYLE_TO_CHARACTER = {
 
 const SOUND_PROFILES = {
   water: {
-    accent: [1760, 1320, 990],
-    chimeType: "sine",
-    slashFilter: "bandpass",
-    slashTone: 560,
-    clash: [210, 520],
+    accent: [1320, 1040, 780],
+    chimeOscTypes: ["sine", "sine", "triangle"],
+    chimeLFORate: 4.2,
+    chimeLFODepth: 5,
+    drawOscType: "triangle",
+    drawFreqStart: 660,
+    drawFreqEnd: 1320,
+    drawDecay: 0.18,
+    drawNoiseColor: "bandpass",
+    drawNoiseFreq: 800,
+    clashFreqs: [420, 840, 210, 1680],
+    clashOscTypes: ["sawtooth", "triangle", "sine", "square"],
+    reverbMix: 0.35,
+    reverbDecay: 1.8,
+    stereoWidth: 0.4,
+    distortion: 0,
+    preBreath: true,
+    breathFreq: 600,
+    breathDuration: 0.25,
     bgColor: "79, 195, 247",
     bgGlow: "rgba(79, 195, 247, 0.32)",
     ambientX: "22%",
     ambientY: "28%",
   },
   thunder: {
-    accent: [2340, 1680, 1260],
-    chimeType: "triangle",
-    slashFilter: "highpass",
-    slashTone: 920,
-    clash: [320, 860],
+    accent: [2340, 1860, 1320],
+    chimeOscTypes: ["triangle", "triangle", "sawtooth"],
+    chimeLFORate: 14.0,
+    chimeLFODepth: 18,
+    drawOscType: "sawtooth",
+    drawFreqStart: 1200,
+    drawFreqEnd: 2400,
+    drawDecay: 0.1,
+    drawNoiseColor: "highpass",
+    drawNoiseFreq: 2000,
+    clashFreqs: [640, 1280, 320, 2560],
+    clashOscTypes: ["sawtooth", "square", "sine", "triangle"],
+    reverbMix: 0.2,
+    reverbDecay: 0.8,
+    stereoWidth: 0.6,
+    distortion: 0.3,
+    preBreath: true,
+    breathFreq: 1200,
+    breathDuration: 0.12,
     bgColor: "255, 223, 92",
     bgGlow: "rgba(255, 223, 92, 0.42)",
     ambientX: "50%",
     ambientY: "45%",
   },
   beast: {
-    accent: [980, 740, 520],
-    chimeType: "triangle",
-    slashFilter: "lowpass",
-    slashTone: 280,
-    clash: [150, 360],
+    accent: [780, 620, 460],
+    chimeOscTypes: ["sawtooth", "triangle", "square"],
+    chimeLFORate: 7.8,
+    chimeLFODepth: 10,
+    drawOscType: "sawtooth",
+    drawFreqStart: 380,
+    drawFreqEnd: 760,
+    drawDecay: 0.15,
+    drawNoiseColor: "lowpass",
+    drawNoiseFreq: 400,
+    clashFreqs: [260, 520, 130, 1040],
+    clashOscTypes: ["square", "sawtooth", "sine", "triangle"],
+    reverbMix: 0.25,
+    reverbDecay: 1.2,
+    stereoWidth: 0.5,
+    distortion: 0.5,
+    preBreath: true,
+    breathFreq: 300,
+    breathDuration: 0.3,
     bgColor: "120, 191, 171",
     bgGlow: "rgba(120, 191, 171, 0.32)",
     ambientX: "75%",
@@ -419,10 +461,54 @@ window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
    7. WEB AUDIO API — SOUND DESIGN
    -------------------------------------------------------------------------- */
 let audioCtx = null;
+let reverbImpulse = null;
+
+function createReverbImpulse(decay = 2.0) {
+  const sr = audioCtx.sampleRate;
+  const len = Math.floor(sr * decay);
+  const buf = audioCtx.createBuffer(2, len, sr);
+  for (let ch = 0; ch < 2; ch++) {
+    const data = buf.getChannelData(ch);
+    for (let i = 0; i < len; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 5);
+    }
+  }
+  return buf;
+}
+
+function createWetDryChain(mix = 0.3) {
+  const dryGain = audioCtx.createGain();
+  dryGain.gain.value = 1;
+  const conv = audioCtx.createConvolver();
+  conv.buffer = reverbImpulse || createReverbImpulse(2.0);
+  conv.normalize = true;
+  const wetGain = audioCtx.createGain();
+  wetGain.gain.value = mix;
+  conv.connect(wetGain);
+  dryGain.connect(audioCtx.destination);
+  wetGain.connect(audioCtx.destination);
+  return { conv, dryGain, wetGain };
+}
+
+function createSoftClipper(amount = 0) {
+  if (amount <= 0) return null;
+  const ws = audioCtx.createWaveShaper();
+  const k = amount * 100;
+  const samples = 256;
+  const curve = new Float32Array(samples);
+  for (let i = 0; i < samples; i++) {
+    const x = (i * 2) / samples - 1;
+    curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+  }
+  ws.curve = curve;
+  ws.oversample = "4x";
+  return ws;
+}
 
 function initAudio() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    reverbImpulse = createReverbImpulse(2.5);
   }
 }
 
@@ -452,121 +538,274 @@ function syncAtmosphere(style = currentStyle) {
   createBgParticles();
 }
 
-// Chime — wind bell / furin
+// Chime anime-style — cada respiración con su firma sonora
 function playChime(style = currentStyle) {
   try {
     initAudio();
     if (audioCtx.state === "suspended") return;
     const profile = getSoundProfile(style);
     const now = audioCtx.currentTime;
+    const dur = 0.4;
+
     const master = audioCtx.createGain();
-    master.gain.setValueAtTime(0.025, now);
-    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-    master.connect(audioCtx.destination);
+    master.gain.setValueAtTime(0.028, now);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+
+    const { dryGain, conv } = createWetDryChain(profile.reverbMix * 0.4);
+    master.connect(dryGain);
+    master.connect(conv);
+
+    const panner = audioCtx.createStereoPanner();
+    dryGain.connect(panner);
+    panner.connect(audioCtx.destination);
+
+    // LFO tremolo — el "aliento" del estilo
+    const lfo = audioCtx.createOscillator();
+    const lfoGain = audioCtx.createGain();
+    lfo.type = "sine";
+    lfo.frequency.value = profile.chimeLFORate;
+    lfoGain.gain.value = profile.chimeLFODepth * 0.003;
+    lfo.connect(lfoGain);
+    lfo.start(now);
+    lfo.stop(now + dur);
 
     profile.accent.forEach((freq, index) => {
       const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = profile.chimeType;
+      const g = audioCtx.createGain();
+      osc.type = profile.chimeOscTypes[index];
       osc.frequency.setValueAtTime(freq, now);
       osc.frequency.exponentialRampToValueAtTime(
-        freq * 0.72,
-        now + 0.12 + index * 0.02,
+        freq * 0.65,
+        now + 0.2 + index * 0.03,
       );
-      gain.gain.setValueAtTime(index === 0 ? 0.75 : 0.32, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.18 + index * 0.03);
-      osc.connect(gain);
-      gain.connect(master);
-      osc.start(now + index * 0.012);
-      osc.stop(now + 0.22 + index * 0.03);
+
+      if (index === 0) {
+        lfoGain.connect(osc.frequency);
+      }
+
+      g.gain.setValueAtTime(index === 0 ? 0.7 : 0.28, now);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 0.28 + index * 0.04);
+
+      const oscPanner = audioCtx.createStereoPanner();
+      oscPanner.pan.setValueAtTime(
+        (index - 1) * profile.stereoWidth * 0.35,
+        now,
+      );
+
+      osc.connect(g);
+      g.connect(oscPanner);
+      oscPanner.connect(master);
+      osc.start(now + index * 0.018);
+      osc.stop(now + dur + index * 0.04);
     });
   } catch (e) {}
 }
 
-// Sword draw
+// Sword draw anime-style — pre-breath + noise sweep + metallic
 function playDrawSound(style = currentStyle) {
   try {
     initAudio();
     if (audioCtx.state === "suspended") return;
     const profile = getSoundProfile(style);
     const now = audioCtx.currentTime;
+
+    // === FASE 1: Pre-breath (inspiración del estilo) ===
+    if (profile.preBreath) {
+      const bNoise = audioCtx.createBufferSource();
+      const bSize = Math.floor(audioCtx.sampleRate * profile.breathDuration);
+      const bBuf = audioCtx.createBuffer(1, bSize, audioCtx.sampleRate);
+      const bData = bBuf.getChannelData(0);
+      for (let i = 0; i < bSize; i++) {
+        bData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bSize, 2);
+      }
+      bNoise.buffer = bBuf;
+      const bFilter = audioCtx.createBiquadFilter();
+      bFilter.type = "bandpass";
+      bFilter.frequency.value = profile.breathFreq;
+      bFilter.Q.value = 2;
+      const bGain = audioCtx.createGain();
+      bGain.gain.setValueAtTime(0.015, now);
+      bGain.gain.exponentialRampToValueAtTime(0.0001, now + profile.breathDuration);
+      bNoise.connect(bFilter);
+      bFilter.connect(bGain);
+      bGain.connect(audioCtx.destination);
+      bNoise.start(now);
+    }
+
+    // === FASE 2: Noise sweep (desenvaine) ===
+    const drawStart = now + (profile.preBreath ? profile.breathDuration * 0.7 : 0);
     const noise = audioCtx.createBufferSource();
-    const bufSize = audioCtx.sampleRate * 0.15;
+    const bufSize = Math.floor(audioCtx.sampleRate * profile.drawDecay);
     const buf = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
     const data = buf.getChannelData(0);
     for (let i = 0; i < bufSize; i++) {
-      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 3);
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufSize, 2.5);
     }
     noise.buffer = buf;
     const filter = audioCtx.createBiquadFilter();
-    filter.type = profile.slashFilter;
-    filter.frequency.setValueAtTime(profile.slashTone * 4, now);
+    filter.type = profile.drawNoiseColor;
+    filter.frequency.setValueAtTime(profile.drawNoiseFreq * 3, drawStart);
     filter.frequency.exponentialRampToValueAtTime(
-      profile.slashTone,
-      now + 0.12,
+      profile.drawNoiseFreq,
+      drawStart + profile.drawDecay * 0.8,
     );
-    const metallic = audioCtx.createOscillator();
-    metallic.type = style === "beast" ? "sawtooth" : "triangle";
-    metallic.frequency.setValueAtTime(profile.slashTone * 1.2, now);
-    metallic.frequency.exponentialRampToValueAtTime(
-      profile.slashTone * 2.4,
-      now + 0.08,
-    );
-    const gain = audioCtx.createGain();
-    gain.gain.setValueAtTime(0.075, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.15);
-    const metallicGain = audioCtx.createGain();
-    metallicGain.gain.setValueAtTime(0.02, now);
-    metallicGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.11);
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.06, drawStart);
+    noiseGain.gain.linearRampToValueAtTime(0, drawStart + profile.drawDecay);
     noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(audioCtx.destination);
-    metallic.connect(metallicGain);
-    metallicGain.connect(audioCtx.destination);
-    noise.start(now);
-    metallic.start(now + 0.01);
-    metallic.stop(now + 0.12);
+    filter.connect(noiseGain);
+    noiseGain.connect(audioCtx.destination);
+    noise.start(drawStart);
+
+    // === FASE 3: Oscilador metálico (filo de la espada) ===
+    const metallic = audioCtx.createOscillator();
+    metallic.type = profile.drawOscType;
+    metallic.frequency.setValueAtTime(profile.drawFreqStart, drawStart);
+    metallic.frequency.exponentialRampToValueAtTime(
+      profile.drawFreqEnd,
+      drawStart + profile.drawDecay * 0.5,
+    );
+    const metalGain = audioCtx.createGain();
+    metalGain.gain.setValueAtTime(0.025, drawStart);
+    metalGain.gain.exponentialRampToValueAtTime(0.0001, drawStart + profile.drawDecay);
+
+    const metalPanner = audioCtx.createStereoPanner();
+    metalPanner.pan.setValueAtTime(profile.stereoWidth * 0.5, drawStart);
+
+    metallic.connect(metalGain);
+    metalGain.connect(metalPanner);
+
+    // Reverb sutíl en el metálico
+    const { dryGain: mDry, conv: mConv } = createWetDryChain(profile.reverbMix * 0.3);
+    metalPanner.connect(mDry);
+    metalPanner.connect(mConv);
+
+    metallic.start(drawStart + 0.015);
+    metallic.stop(drawStart + profile.drawDecay);
   } catch (e) {}
 }
 
-// Blade clash
+// Blade clash anime-style — 4 fases: pre-clash, impacto, sostenido, cola
 function playClashSound(style = currentStyle) {
   try {
     initAudio();
     if (audioCtx.state === "suspended") return;
     const profile = getSoundProfile(style);
     const now = audioCtx.currentTime;
-    const osc1 = audioCtx.createOscillator();
-    const osc2 = audioCtx.createOscillator();
-    const sub = audioCtx.createOscillator();
+    const { dryGain, conv, wetGain } = createWetDryChain(profile.reverbMix);
+    const dist = createSoftClipper(profile.distortion);
+
+    // === FASE 1: Pre-clash — silencio + breath hold (0–0.08s) ===
+    const preEnd = now + 0.06;
+
+    // === FASE 2: Impacto — 4 osciladores + noise burst (0.08–0.25s) ===
+    const impactStart = preEnd;
+    const impactGain = audioCtx.createGain();
+    impactGain.gain.setValueAtTime(0.09, impactStart);
+    impactGain.gain.linearRampToValueAtTime(0.04, impactStart + 0.12);
+    impactGain.gain.exponentialRampToValueAtTime(0.0001, impactStart + 0.35);
+    impactGain.connect(dryGain);
+
+    // Pre-conectar distorsión al bus de impacto
+    if (dist) dist.connect(impactGain);
+
+    profile.clashFreqs.forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      osc.type = profile.clashOscTypes[i];
+      osc.frequency.setValueAtTime(freq, impactStart);
+      osc.frequency.exponentialRampToValueAtTime(
+        freq * (i === 0 ? 1.8 : i === 1 ? 0.6 : 0.75),
+        impactStart + 0.2,
+      );
+
+      const g = audioCtx.createGain();
+      g.gain.setValueAtTime(i === 3 ? 0.35 : 0.7, impactStart);
+      g.gain.linearRampToValueAtTime(0, impactStart + 0.3);
+
+      osc.connect(g);
+      if (dist) {
+        g.connect(dist);
+      } else {
+        g.connect(impactGain);
+      }
+
+      osc.start(impactStart + i * profile.clashDelay);
+      osc.stop(impactStart + 0.35);
+    });
+
+    // Noise burst (impacto físico)
+    const noise = audioCtx.createBufferSource();
+    const nSize = Math.floor(audioCtx.sampleRate * 0.06);
+    const nBuf = audioCtx.createBuffer(1, nSize, audioCtx.sampleRate);
+    const nData = nBuf.getChannelData(0);
+    for (let i = 0; i < nSize; i++) {
+      nData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / nSize, 8);
+    }
+    noise.buffer = nBuf;
+    const noiseGain = audioCtx.createGain();
+    noiseGain.gain.setValueAtTime(0.07, impactStart + 0.01);
+    noiseGain.gain.exponentialRampToValueAtTime(0.0001, impactStart + 0.1);
+    noise.connect(noiseGain);
+    if (dist) {
+      noiseGain.connect(dist);
+    } else {
+      noiseGain.connect(impactGain);
+    }
+    noise.start(impactStart + 0.01);
+
+    // === FASE 3: Sostenido — el anillo metálico (0.25–0.5s) ===
+    const ringStart = impactStart + 0.12;
+    const ring = audioCtx.createOscillator();
+    ring.type = "sine";
+    ring.frequency.setValueAtTime(profile.clashFreqs[1] * 0.3, ringStart);
+    ring.frequency.exponentialRampToValueAtTime(
+      profile.clashFreqs[1] * 0.15,
+      ringStart + 0.25,
+    );
+    const ringGain = audioCtx.createGain();
+    ringGain.gain.setValueAtTime(0.03, ringStart);
+    ringGain.gain.exponentialRampToValueAtTime(0.0001, ringStart + 0.35);
+    ring.connect(ringGain);
+    ringGain.connect(audioCtx.destination);
+    ring.start(ringStart);
+    ring.stop(ringStart + 0.35);
+
+    // === FASE 4: Cola — reverb tail + paneo L→R (0.5–0.9s) ===
+    const tailPanner = audioCtx.createStereoPanner();
+    tailPanner.pan.setValueAtTime(-0.6, impactStart);
+    tailPanner.pan.linearRampToValueAtTime(0.6, impactStart + 0.4);
+    impactGain.connect(tailPanner);
+    tailPanner.connect(conv);
+  } catch (e) {}
+}
+
+// Selection impact — sonido breve al hacer click en una card (entre hover y draw)
+function playSelectionImpact(style = currentStyle) {
+  try {
+    initAudio();
+    if (audioCtx.state === "suspended") return;
+    const profile = getSoundProfile(style);
+    const now = audioCtx.currentTime;
+
+    const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc1.type = "sawtooth";
-    osc1.frequency.setValueAtTime(profile.clash[0], now);
-    osc1.frequency.exponentialRampToValueAtTime(profile.clash[1], now + 0.2);
-    osc2.type = style === "thunder" ? "triangle" : "square";
-    osc2.frequency.setValueAtTime(profile.clash[1] * 0.55, now + 0.05);
-    osc2.frequency.exponentialRampToValueAtTime(
-      profile.clash[0] * 0.6,
-      now + 0.15,
+    osc.type = style === "beast" ? "sawtooth" : "sine";
+    osc.frequency.setValueAtTime(profile.accent[1] * 1.2, now);
+    osc.frequency.exponentialRampToValueAtTime(
+      profile.accent[1] * 0.5,
+      now + 0.08,
     );
-    sub.type = "sine";
-    sub.frequency.setValueAtTime(Math.max(60, profile.clash[0] * 0.5), now);
-    sub.frequency.exponentialRampToValueAtTime(
-      Math.max(42, profile.clash[0] * 0.35),
-      now + 0.28,
-    );
-    gain.gain.setValueAtTime(0.085, now);
-    gain.gain.linearRampToValueAtTime(0, now + 0.3);
-    osc1.connect(gain);
-    osc2.connect(gain);
-    sub.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc1.start(now);
-    osc2.start(now + 0.05);
-    sub.start(now);
-    osc1.stop(now + 0.3);
-    osc2.stop(now + 0.25);
-    sub.stop(now + 0.3);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+
+    const panner = audioCtx.createStereoPanner();
+    panner.pan.setValueAtTime(profile.stereoWidth * 0.3, now);
+
+    osc.connect(gain);
+    gain.connect(panner);
+    panner.connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.1);
   } catch (e) {}
 }
 
@@ -679,6 +918,12 @@ cardArticles.forEach((card) => {
 
   card.addEventListener("mouseenter", () => {
     if (!radio.checked) playChime(styleMap[charId] || currentStyle);
+  });
+
+  card.addEventListener("click", (e) => {
+    if (!radio.checked) {
+      playSelectionImpact(styleMap[charId] || currentStyle);
+    }
   });
 
   radio.addEventListener("change", () => {
