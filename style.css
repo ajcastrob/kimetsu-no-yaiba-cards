@@ -1624,7 +1624,7 @@ body::before {
   animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
-#youtube-player {
+#music-audio {
   position: absolute;
   width: 0;
   height: 0;
