@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Antique+Soft&family=Zen+Kaku+Gothic+New:wght@300;400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <title>鬼滅の刃 // DEMON SLAYER CORPS SELECTOR</title>
+    <!-- YouTube IFrame API -->
+    <script defer src="https://www.youtube.com/iframe_api"></script>
+  </head>
+  <body>
+    <!-- Fondo nocturno Taisho con luna y rejilla -->
+    <div class="bg-night"></div>
+    <div class="moon"></div>
+    <div class="bg-particles" id="bg-particles"></div>
+    <div class="scanlines"></div>
+
+    <div class="app-container">
+      <!-- Cabecera HUD Cuerpo de Exterminio -->
+      <header class="hud-header">
+        <div class="hud-left">
+          <span class="wisteria-crest">❀</span>
+          <span class="hud-sep">//</span>
+          <span class="hud-status status-active">SYS: ACTIVO</span>
+          <span class="hud-sep">//</span>
+          <span class="hud-unit">鬼殺隊 // CUERPO DE EXTERMINIO</span>
+        </div>
+        <h1 class="hud-title">
+          <span class="title-kanji">鬼滅の刃</span>
+          <span class="title-sub">KIMETSU NO YAIBA</span>
+        </h1>
+        <div class="hud-right">
+          <span class="hud-zodiac" id="hud-zodiac">―</span>
+          <span class="hud-time" id="hud-clock">――:――:――</span>
+          <span class="hud-sep">//</span>
+          <span class="hud-ver">SYS_V4.82 // TAISHO_ERA</span>
+        </div>
+      </header>
+
+      <main class="hud-main">
+        <!-- Contenedor de Tarjetas de Personajes -->
+        <section class="select-section">
+          <div class="section-title-wrap">
+            <span class="title-sub-label"
+              >選 // SELECCIONA A TU ESPADACHÍN</span
+            >
+            <h2 class="section-title">選べ // ELIGE</h2>
+          </div>
+
+          <div class="cards-container" id="cards-container">
+            <!-- Tanjiro Kamado -->
+            <article
+              class="character-card card-tanjiro"
+              data-character="tanjiro"
+            >
+              <label class="card-label">
+                <input type="radio" name="slayer" id="radio-tanjiro" checked />
+                <div class="card-inner">
+                  <div
+                    class="breathing-effect water-effect"
+                    data-effect="water"
+                  >
+                    <div class="particle-layer" data-style="water"></div>
+                  </div>
+                  <div class="corner-frame">
+                    <span class="corner tl"></span>
+                    <span class="corner tr"></span>
+                    <span class="corner bl"></span>
+                    <span class="corner br"></span>
+                  </div>
+                  <div class="img-wrap">
+                    <img
+                      src="https://i.pinimg.com/1200x/cf/87/20/cf87203e0da4b566701291d90fa284dd.jpg"
+                      alt="Tanjiro Kamado"
+                      class="slayer-img"
+                      loading="lazy"
+                    />
+                    <div class="img-overlay"></div>
+                    <span class="breathing-kanji">水</span>
+                  </div>
+                  <div class="card-meta">
+                    <span class="slayer-rank">Kanoe // 丙</span>
+                    <h3 class="slayer-name">竈門 炭治郎</h3>
+                    <div class="slayer-sub">
+                      <span class="romaji-name">TANJIRO KAMADO</span>
+                      <span class="breathing-style">水の呼吸 // WATER</span>
+                    </div>
+                  </div>
+                </div>
+              </label>
+            </article>
+
+            <!-- Zenitsu Agatsuma -->
+            <article
+              class="character-card card-zenitsu"
+              data-character="zenitsu"
+            >
+              <label class="card-label">
+                <input type="radio" name="slayer" id="radio-zenitsu" />
+                <div class="card-inner">
+                  <div
+                    class="breathing-effect thunder-effect"
+                    data-effect="thunder"
+                  >
+                    <div class="particle-layer" data-style="thunder"></div>
+                  </div>
+                  <div class="corner-frame">
+                    <span class="corner tl"></span>
+                    <span class="corner tr"></span>
+                    <span class="corner bl"></span>
+                    <span class="corner br"></span>
+                  </div>
+                  <div class="img-wrap">
+                    <img
+                      src="https://i.pinimg.com/1200x/ab/a9/1b/aba91ba6ca5a3f9c71485172aad60baf.jpg"
+                      alt="Zenitsu Agatsuma"
+                      class="slayer-img"
+                      loading="lazy"
+                    />
+                    <div class="img-overlay"></div>
+                    <span class="breathing-kanji">雷</span>
+                  </div>
+                  <div class="card-meta">
+                    <span class="slayer-rank">Kanoe // 丙</span>
+                    <h3 class="slayer-name">我妻 善逸</h3>
+                    <div class="slayer-sub">
+                      <span class="romaji-name">ZENITSU AGATSUMA</span>
+                      <span class="breathing-style">雷の呼吸 // THUNDER</span>
+                    </div>
+                  </div>
+                </div>
+              </label>
+            </article>
+
+            <!-- Inosuke Hashibira -->
+            <article
+              class="character-card card-inosuke"
+              data-character="inosuke"
+            >
+              <label class="card-label">
+                <input type="radio" name="slayer" id="radio-inosuke" />
+                <div class="card-inner">
+                  <div
+                    class="breathing-effect beast-effect"
+                    data-effect="beast"
+                  >
+                    <div class="particle-layer" data-style="beast"></div>
+                  </div>
+                  <div class="corner-frame">
+                    <span class="corner tl"></span>
+                    <span class="corner tr"></span>
+                    <span class="corner bl"></span>
+                    <span class="corner br"></span>
+                  </div>
+                  <div class="img-wrap">
+                    <img
+                      src="https://i.pinimg.com/1200x/5c/2b/24/5c2b24c7eb15b4d247310fe35ce1c95c.jpg"
+                      alt="Inosuke Hashibira"
+                      class="slayer-img"
+                      loading="lazy"
+                    />
+                    <div class="img-overlay"></div>
+                    <span class="breathing-kanji">獣</span>
+                  </div>
+                  <div class="card-meta">
+                    <span class="slayer-rank">Tsuchinoto // 卯</span>
+                    <h3 class="slayer-name">嘴平 伊之助</h3>
+                    <div class="slayer-sub">
+                      <span class="romaji-name">INOSUKE HASHIBIRA</span>
+                      <span class="breathing-style">獣の呼吸 // BEAST</span>
+                    </div>
+                  </div>
+                </div>
+              </label>
+            </article>
+          </div>
+        </section>
+
+        <!-- Panel de Información del Espadachín -->
+        <aside class="details-panel" id="details-panel">
+          <div class="corner-frame">
+            <span class="corner tl"></span>
+            <span class="corner tr"></span>
+            <span class="corner bl"></span>
+            <span class="corner br"></span>
+          </div>
+
+          <div class="panel-section">
+            <div class="panel-header">
+              <span class="dec-line"></span>
+              <h3 class="panel-title" id="slayer-code">
+                竈門 炭治郎 // OP_01 // 水
+              </h3>
+            </div>
+            <p class="panel-bio" id="slayer-bio">
+              Texto de biografía del cazador...
+            </p>
+          </div>
+
+          <div class="panel-section">
+            <span class="label-tech">戦闘能力 // PARÁMETROS DE COMBATE</span>
+            <div class="stat-group">
+              <div class="stat-row">
+                <span class="stat-label">FUERZA</span>
+                <div class="stat-bar">
+                  <div
+                    class="stat-fill"
+                    id="stat-strength"
+                    style="width: 75%"
+                  ></div>
+                </div>
+                <span class="stat-val" id="val-strength">75</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">VELOCIDAD</span>
+                <div class="stat-bar">
+                  <div
+                    class="stat-fill"
+                    id="stat-speed"
+                    style="width: 82%"
+                  ></div>
+                </div>
+                <span class="stat-val" id="val-speed">82</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">TÉCNICA</span>
+                <div class="stat-bar">
+                  <div
+                    class="stat-fill"
+                    id="stat-technique"
+                    style="width: 90%"
+                  ></div>
+                </div>
+                <span class="stat-val" id="val-technique">90</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">ENERGíA</span>
+                <div class="stat-bar">
+                  <div
+                    class="stat-fill"
+                    id="stat-concentration"
+                    style="width: 95%"
+                  ></div>
+                </div>
+                <span class="stat-val" id="val-concentration">95</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <span class="label-tech">呼吸 // ESTILO DE RESPIRACIÓN</span>
+            <div class="ability-box" id="ability-box">
+              <h4 class="ability-title" id="ability-name">
+                水の呼吸 // WATER BREATHING
+              </h4>
+              <p class="ability-desc" id="ability-desc">
+                Descripción de la habilidad...
+              </p>
+            </div>
+          </div>
+
+          <button class="action-btn" id="confirm-btn" type="button">
+            <span>⚔ CONFIRMAR EXTERMINIO // ENGAGE</span>
+          </button>
+        </aside>
+
+        <!-- Reproductor de música YouTube -->
+        <div class="music-player" id="music-player">
+          <div class="music-info">
+            <span class="music-label">♪ TEMA DEL PERSONAJE</span>
+            <span class="music-title" id="music-title"
+              >Kamado Tanjiro no Uta</span
+            >
+          </div>
+          <div class="music-controls">
+            <span class="music-dot"></span>
+            <div id="youtube-player"></div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer HUD -->
+      <footer class="hud-footer">
+        <div class="footer-left">
+          <span>❀ WISTERIA SEC-NET // RED SEGURA</span>
+        </div>
+        <div class="footer-center">
+          <span class="pulse-dot"></span>
+          <span id="mission-status">MISIÓN: EN ESPERA // 待機中</span>
+        </div>
+        <div class="footer-right">
+          <span id="footer-coords"
+            >CUARTEL GENERAL // 35.6762°N 139.6503°E</span
+          >
+        </div>
+      </footer>
+    </div>
+
+    <!-- Canvas para partículas sobre el fondo pero tras el contenedor -->
+    <canvas id="particle-canvas"></canvas>
+
+    <script src="index.js"></script>
+  </body>
+</html>
