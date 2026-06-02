@@ -1,4 +1,13 @@
-import { SOUND_PROFILES } from "../lib/data.js";
+function loadCSS(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+loadCSS(new URL("./particle-canvas.css", import.meta.url).href);
+
+import { SOUND_PROFILES } from "../../lib/data.js";
 
 export class ParticleCanvas extends HTMLElement {
   connectedCallback() {

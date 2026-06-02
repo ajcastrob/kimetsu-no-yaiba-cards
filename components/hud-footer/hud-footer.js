@@ -1,3 +1,12 @@
+function loadCSS(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+loadCSS(new URL("./hud-footer.css", import.meta.url).href);
+
 export class HudFooter extends HTMLElement {
   connectedCallback() {
     this.classList.add("hud-footer");

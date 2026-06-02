@@ -1,4 +1,13 @@
-import { getEtoki } from "../lib/data.js";
+function loadCSS(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+loadCSS(new URL("./hud-header.css", import.meta.url).href);
+
+import { getEtoki } from "../../lib/data.js";
 
 export class HudHeader extends HTMLElement {
   connectedCallback() {

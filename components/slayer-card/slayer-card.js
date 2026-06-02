@@ -1,3 +1,12 @@
+function loadCSS(href) {
+  if (document.querySelector(`link[href="${href}"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+}
+loadCSS(new URL("./slayer-card.css", import.meta.url).href);
+
 export class SlayerCard extends HTMLElement {
   static get observedAttributes() {
     return ["character", "name-kanji", "name-romaji", "rank", "breathing-style", "breathing-kanji", "image", "image-alt", "effect", "checked"];
