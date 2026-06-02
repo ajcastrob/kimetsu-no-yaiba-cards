@@ -35,9 +35,10 @@ export class HudFooter extends HTMLElement {
 
     const updateMission = () => {
       const sec = new Date().getSeconds();
-      missionEl.textContent = sec % 30 < 15
-        ? "MISIÓN: EN ESPERA // 待機中"
-        : "MISIÓN: ACTIVA // 任務中";
+      missionEl.textContent =
+        sec % 30 < 15
+          ? "MISIÓN: EN ESPERA // 待機中"
+          : "MISIÓN: ACTIVA // 任務中";
     };
 
     const updateCoords = () => {
