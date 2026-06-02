@@ -1,8 +1,0 @@
-/* bg-particles component styles */
-
-.bg-particles {
-  position: fixed;
-  inset: 0;
-  z-index: -8;
-  pointer-events: none;
-}
