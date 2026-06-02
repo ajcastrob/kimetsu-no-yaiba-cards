@@ -6,7 +6,7 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "dev": "servor ./ index.html 1234 --reload",
     "deploy": "gh-pages -d ./"
