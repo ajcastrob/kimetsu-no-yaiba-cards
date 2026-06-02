@@ -1,6 +1,6 @@
 # 鬼滅の刃 // DEMON SLAYER CORPS SELECTOR
 
-Selector interactivo de personajes del anime *Demon Slayer: Kimetsu no Yaiba* con estética HUD del Cuerpo de Exterminio, efectos de respiración animados, diseño de sonido por Web Audio y tema musical por personaje vía YouTube.
+Selector interactivo de personajes del anime *Demon Slayer: Kimetsu no Yaiba* con estética HUD del Cuerpo de Exterminio, efectos de respiración animados, diseño de sonido por Web Audio y tema musical local por personaje.
 
 ## Características
 
@@ -58,32 +58,78 @@ Abrir en el navegador: `http://localhost:1234`
 ## Estructura del proyecto
 
 ```
-├── index.html            # Punto de entrada — HTML del selector
-├── style.css             # Sistema de estilos completo (~1800 líneas)
-├── index.js              # Lógica JS: partículas, audio, YouTube, UI (~1000 líneas)
-├── package.json          # Dependencias y scripts
-├── pnpm-lock.yaml        # Lockfile de dependencias
-├── DOSSIER_KIMETSU_DESIGN.md  # Guía de diseño visual completa
-├── fonts/
-│   ├── roboto-vf.woff2        # Roboto Variable Font
-│   ├── roboto-vf.woff
-│   ├── roboto-vf.ttf
-│   ├── NotoSansKhmer-vf.woff2 # Noto Sans Khmer Variable Font
-│   ├── NotoSansKhmer-vf.woff
-│   └── NotoSansKhmer-vf.ttf
+├── index.html                     # Punto de entrada — HTML del selector
+├── package.json                   # Dependencias y scripts
+├── DOSSIER_KIMETSU_DESIGN.md     # Guía de diseño visual completa
+├── src/
+│   ├── style.css                  # Sistema de estilos completo
+│   ├── index.js                   # Punto de entrada JS
+│   ├── audio/                     # Música local por personaje
+│   │   ├── tanjiro.mp3
+│   │   ├── zenitsu.mp3
+│   │   └── inosuke.mp3
+│   ├── fonts/
+│   │   ├── roboto-vf.woff2        # Roboto Variable Font
+│   │   ├── roboto-vf.woff
+│   │   ├── roboto-vf.ttf
+│   │   ├── NotoSansKhmer-vf.woff2 # Noto Sans Khmer Variable Font
+│   │   ├── NotoSansKhmer-vf.woff
+│   │   └── NotoSansKhmer-vf.ttf
+│   ├── components/                # Web Components (cada uno con su CSS y JS)
+│   │   ├── bg-particles/          # Fondo nocturno con partículas
+│   │   ├── hud-header/            # Cabecera HUD
+│   │   ├── hud-footer/            # Pie de página HUD
+│   │   ├── slayer-card/           # Tarjeta de personaje
+│   │   ├── slayer-details/        # Panel de información del espadachín
+│   │   ├── music-player/          # Reproductor de música
+│   │   └── particle-canvas/       # Canvas de partículas de respiración
+│   └── lib/                       # Módulos de lógica
+│       ├── atmosphere.js          # Efectos atmosféricos
+│       ├── audio-engine.js        # Motor de audio (Web Audio API)
+│       ├── breathing-effects.js   # Efectos de respiración
+│       ├── data.js                # Datos de personajes
+│       ├── events.js              # Sistema de eventos
+│       ├── init.js                # Inicialización
+│       └── slayer-selection.js    # Lógica de selección
 ```
 
 ## Arquitectura
 
+### Web Components
+
+La interfaz está organizada en Web Components nativos, cada uno con su propio CSS y JS:
+
+| Componente | Función |
+|-----------|---------|
+| `<bg-particles>` | Fondo nocturno Taisho con partículas ambientales |
+| `<hud-header>` | Cabecera HUD con reloj del zodiaco y estado de misión |
+| `<hud-footer>` | Pie de página con coordenadas del cuartel general |
+| `<slayer-card>` | Tarjeta de personaje con animación 3D y foil shimmer |
+| `<slayer-details>` | Panel de información (bio, stats, habilidad) |
+| `<music-player>` | Reproductor de música local por personaje |
+| `<particle-canvas>` | Canvas de partículas de respiración |
+
+### Módulos de lógica (`src/lib/`)
+
+| Módulo | Función |
+|--------|---------|
+| `data.js` | Datos de personajes (bio, stats, colores) |
+| `events.js` | Sistema de eventos personalizado |
+| `init.js` | Inicialización de la aplicación |
+| `slayer-selection.js` | Lógica de selección de personaje |
+| `atmosphere.js` | Efectos atmosféricos visuales |
+| `audio-engine.js` | Motor de sonido con Web Audio API |
+| `breathing-effects.js` | Configuración de partículas por estilo |
+
 ### Flujo de selección de personaje
 
-1. El usuario hace clic en una tarjeta de personaje
+1. El usuario hace clic en un `<slayer-card>`
 2. El `input[type=radio]` asociado se marca como `checked`
 3. CSS aplica el tema dinámico mediante `:root:has(#radio-xxx:checked)` — cambia colores, glow, borde y opacidad de efectos
 4. `selectSlayer(id)` en JS actualiza:
    - Panel de información (nombre, biografía, stats, habilidad)
    - Estilo de respiración (partículas del canvas)
-   - Tema musical vía YouTube IFrame API
+   - Reproductor de música local del personaje
    - Sonido de desenvaine con perfil de audio del personaje
    - Efecto visual de transición (`is-style-switching`)
 
@@ -124,7 +170,6 @@ El proyecto es 100% vanilla — sin frameworks, sin librerías externas de UI, s
 
 ### Recursos externos (runtime)
 
-- [YouTube IFrame API](https://developers.google.com/youtube/iframe_api_reference) — reproducción de temas musicales
 - [Google Fonts](https://fonts.google.com) — Yuji Syuku, Zen Antique Soft, Zen Kaku Gothic New
 
 ## Formato de fuentes
@@ -141,12 +186,12 @@ Para convertir fuentes TTF a WOFF2:
 
 ```bash
 # Requiere woff2 (https://github.com/google/woff2)
-woff2_compress roboto-vf.ttf
+woff2_compress src/fonts/roboto-vf.ttf
 ```
 
 ```bash
 # Alternativa con pnpm
-pnpx ttf2woff roboto-vf.ttf roboto-vf.woff
+pnpx ttf2woff src/fonts/roboto-vf.ttf src/fonts/roboto-vf.woff
 ```
 
 ## Despliegue
@@ -165,10 +210,11 @@ El proyecto es HTML/CSS/JS puro — copia los archivos a cualquier servidor web 
 
 Para añadir más personajes:
 
-1. Añadir un `<article class="character-card">` en `index.html` con un radio button y `data-character="nuevo-id"`
-2. Agregar la entrada en `SLAYERS` en `index.js` con bio, stats, videoId, etc.
-3. Añadir tema CSS con `:root:has(#radio-nuevo-id:checked)` en `style.css`
-4. Agregar perfil de sonido en `SOUND_PROFILES` en `index.js`
+1. Añadir un `<slayer-card>` en `index.html` con `character="nuevo-id"` y atributos correspondientes
+2. Agregar la entrada en `src/lib/data.js` con bio, stats, colores, etc.
+3. Añadir tema CSS con `:root:has(#radio-nuevo-id:checked)` en `src/style.css`
+4. Agregar perfil de sonido en `src/lib/audio-engine.js`
+5. Añadir archivo de música local en `src/audio/nuevo-id.mp3`
 
 ## Licencia
 
